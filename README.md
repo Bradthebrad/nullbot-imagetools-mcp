@@ -71,6 +71,14 @@ The server reads keys from environment variables. NullBot can pass these from it
 | `OPENAI_API_KEY` | `generate_image_openai`, `edit_image_openai` |
 | `OPENROUTER_API_KEY` | `generate_image_openrouter`, OpenRouter model discovery |
 
+You can also pass keys manually when launching the server outside NullBot:
+
+```powershell
+.\nullbot-imagetools-mcp.exe --workspace "C:\work\images" --openai-api-key "sk-..." --openrouter-api-key "sk-or-..."
+```
+
+When launched by NullBot, the server expects NullBot to inject saved keys from `~/.nullbot/api/keys.json` into the MCP process environment. You should not need to set shell environment variables for the normal NullBot marketplace flow.
+
 OpenAI image model access varies by account. The tool defaults to `gpt-image-1`, but supports `gpt-image-2`, `dall-e-3`, and other compatible image models when the account supports them.
 
 OpenRouter image generation is model-dependent. Use `list_image_models` to discover models that advertise image output, then pass the selected model id to `generate_image_openrouter`.

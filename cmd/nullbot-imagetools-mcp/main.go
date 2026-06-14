@@ -20,12 +20,20 @@ func main() {
 	messagePath := flag.String("message-path", "/message", "Legacy SSE message endpoint path.")
 	workspace := flag.String("workspace", ".", "Workspace root. Image tools cannot write outside this directory.")
 	maxImageBytes := flag.Int64("max-image-bytes", 30*1024*1024, "Maximum input image bytes for local/provider tools.")
+	openAIKey := flag.String("openai-api-key", "", "OpenAI API key. Defaults to OPENAI_API_KEY environment variable.")
+	openRouterKey := flag.String("openrouter-api-key", "", "OpenRouter API key. Defaults to OPENROUTER_API_KEY environment variable.")
 	showVersion := flag.Bool("version", false, "Print version and exit.")
 	flag.Parse()
 
 	if *showVersion {
 		fmt.Println("nullbot-imagetools-mcp", version)
 		return
+	}
+	if *openAIKey != "" {
+		_ = os.Setenv("OPENAI_API_KEY", *openAIKey)
+	}
+	if *openRouterKey != "" {
+		_ = os.Setenv("OPENROUTER_API_KEY", *openRouterKey)
 	}
 
 	imageTools, err := imagetools.New(imagetools.Config{
