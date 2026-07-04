@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/Bradthebrad/nullbot-imagetools-mcp/internal/imagetools"
-	"tinychain/mcp"
+	"github.com/Bradthebrad/tinychain/mcp"
 )
 
 const version = "0.1.1"

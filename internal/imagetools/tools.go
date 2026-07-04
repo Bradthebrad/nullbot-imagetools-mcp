@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"tinychain/mcp"
+	"github.com/Bradthebrad/tinychain/mcp"
 )
 
 func (t *ImageTools) Tools() []mcp.Tool {

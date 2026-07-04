@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Bradthebrad/tinychain/mcp"
 	"github.com/jung-kurt/gofpdf"
-	"tinychain/mcp"
 )
 
 func (t *ImageTools) makeImagePDFTool() mcp.Tool {

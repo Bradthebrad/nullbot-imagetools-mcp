@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"tinychain/mcp"
+	"github.com/Bradthebrad/tinychain/mcp"
 )
 
 const (

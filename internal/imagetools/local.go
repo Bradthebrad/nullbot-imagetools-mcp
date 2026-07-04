@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Bradthebrad/tinychain/mcp"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
-	"tinychain/mcp"
 )
 
 func (t *ImageTools) inspectImageTool() mcp.Tool {

@@ -36,10 +36,12 @@ Local tools:
 go build -trimpath -ldflags "-s -w" -o dist/nullbot-imagetools-mcp.exe ./cmd/nullbot-imagetools-mcp
 ```
 
-The server depends on `tinychain/mcp`. In this repo, local development uses:
+The server depends on tagged Go modules, including `github.com/Bradthebrad/tinychain`.
+From a fresh clone:
 
-```go
-replace tinychain/mcp => ../tinychain/mcp
+```powershell
+go mod download
+go test ./...
 ```
 
 ## Run

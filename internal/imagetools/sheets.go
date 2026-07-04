@@ -8,10 +8,10 @@ import (
 	"image/draw"
 	"path/filepath"
 
+	"github.com/Bradthebrad/tinychain/mcp"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
-	"tinychain/mcp"
 )
 
 func (t *ImageTools) makeContactSheetTool() mcp.Tool {
