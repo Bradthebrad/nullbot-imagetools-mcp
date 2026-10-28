@@ -14,11 +14,11 @@ import (
 func (t *ImageTools) makeImagePDFTool() mcp.Tool {
 	return mcp.Tool{
 		Name:        "make_image_pdf",
-		Description: "Build a PDF from workspace-relative images. Useful for coloring books, workbooks, proofs, and image packets.",
+		Description: "Build a PDF from images in the workspace. Useful for coloring books, workbooks, proofs, and image packets.",
 		InputSchema: schema(map[string]any{
-			"image_paths": stringArrayProp("Workspace-relative image paths, in page order."),
-			"output_path": stringProp("Workspace-relative PDF output path."),
-			"title":       stringProp("Optional title for PDF metadata and first page heading."),
+			"image_paths": stringArrayProp("Image paths in the workspace, in page order."),
+			"output_path": stringProp("PDF output path in the workspace."),
+			"title":       stringProp("Optional title, saved in the PDF's document properties."),
 			"page_size":   stringProp("letter or a4. Default: letter."),
 			"orientation": stringProp("portrait or landscape. Default: portrait."),
 			"captions":    boolProp("Add image filename captions."),
