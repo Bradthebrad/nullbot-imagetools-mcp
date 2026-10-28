@@ -11,16 +11,17 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Bradthebrad/tinychain/mcp"
 )
 
+// openAIImageEditsURL is a variable so tests can point it at a local server.
+var openAIImageEditsURL = "https://api.openai.com/v1/images/edits"
+
 const (
 	openAIImagesURL       = "https://api.openai.com/v1/images/generations"
-	openAIImageEditsURL   = "https://api.openai.com/v1/images/edits"
 	openRouterChatURL     = "https://openrouter.ai/api/v1/chat/completions"
 	openRouterModelsURL   = "https://openrouter.ai/api/v1/models"
 	providerClientTimeout = 180 * time.Second
@@ -61,7 +62,7 @@ func (t *ImageTools) generateImageOpenAITool() mcp.Tool {
 		Description: "Generate an image with OpenAI Images API and save it into the workspace.",
 		InputSchema: schema(map[string]any{
 			"prompt":      stringProp("Image prompt."),
-			"output_path": stringProp("Workspace-relative path to save the generated image."),
+			"output_path": stringProp("Where to save the generated image, in the workspace."),
 			"model":       stringProp("OpenAI image model. Default: gpt-image-1."),
 			"size":        stringProp("Image size such as 1024x1024, 1536x1024, or auto. Default: 1024x1024."),
 			"quality":     stringProp("Quality hint such as low, medium, high, hd, or auto."),
@@ -109,10 +110,10 @@ func (t *ImageTools) editImageOpenAITool() mcp.Tool {
 		Name:        "edit_image_openai",
 		Description: "Edit an existing workspace image with OpenAI Images API and save the result into the workspace.",
 		InputSchema: schema(map[string]any{
-			"input_path":  stringProp("Workspace-relative source image path."),
-			"output_path": stringProp("Workspace-relative edited image path."),
+			"input_path":  stringProp("Source picture (PNG, JPEG or WebP): a path in the workspace, relative or absolute."),
+			"output_path": stringProp("Where to save the edited picture, in the workspace."),
 			"prompt":      stringProp("Edit instruction."),
-			"mask_path":   stringProp("Optional workspace-relative mask image path."),
+			"mask_path":   stringProp("Optional PNG mask, the same size as the source: transparent pixels mark what to change."),
 			"model":       stringProp("OpenAI image edit model. Default: gpt-image-1."),
 			"size":        stringProp("Output size such as 1024x1024 or auto."),
 		}, "input_path", "output_path", "prompt"),
@@ -125,6 +126,19 @@ func (t *ImageTools) editImageOpenAITool() mcp.Tool {
 			if err != nil {
 				return mcp.ToolResult{}, err
 			}
+			if err := t.checkUploadSize(input); err != nil {
+				return mcp.ToolResult{}, fmt.Errorf("input_path: %w", err)
+			}
+			mask := ""
+			if raw := textArg(args, "mask_path"); strings.TrimSpace(raw) != "" {
+				// A mask that can't be used is an error, not a silent edit of the whole picture.
+				if mask, err = t.resolve(raw); err != nil {
+					return mcp.ToolResult{}, fmt.Errorf("mask_path: %w", err)
+				}
+				if err := t.checkUploadSize(mask); err != nil {
+					return mcp.ToolResult{}, fmt.Errorf("mask_path: %w", err)
+				}
+			}
 			output, err := t.resolveOutput(textArg(args, "output_path"))
 			if err != nil {
 				return mcp.ToolResult{}, err
@@ -133,7 +147,7 @@ func (t *ImageTools) editImageOpenAITool() mcp.Tool {
 			if model == "" {
 				model = "gpt-image-1"
 			}
-			data, err := postOpenAIImageEdit(ctx, key, input, t.optionalPath(textArg(args, "mask_path")), model, textArg(args, "prompt"), textArg(args, "size"))
+			data, err := postOpenAIImageEdit(ctx, key, input, mask, model, textArg(args, "prompt"), textArg(args, "size"))
 			if err != nil {
 				return mcp.ToolResult{}, err
 			}
@@ -151,7 +165,7 @@ func (t *ImageTools) generateImageOpenRouterTool() mcp.Tool {
 		Description: "Generate an image through OpenRouter chat completions with an image-output model and save it into the workspace.",
 		InputSchema: schema(map[string]any{
 			"prompt":      stringProp("Image prompt."),
-			"output_path": stringProp("Workspace-relative path to save the generated image."),
+			"output_path": stringProp("Where to save the generated image, in the workspace."),
 			"model":       stringProp("OpenRouter model id that supports image output."),
 			"site_url":    stringProp("Optional HTTP-Referer header."),
 			"app_name":    stringProp("Optional X-Title header."),
@@ -259,31 +273,6 @@ func postOpenAIImageEdit(ctx context.Context, key, inputPath, maskPath, model, p
 		return nil, fmt.Errorf("openai image edit status %d: %s", resp.StatusCode, string(out))
 	}
 	return out, nil
-}
-
-func addMultipartFile(writer *multipart.Writer, field, path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	part, err := writer.CreateFormFile(field, filepath.Base(path))
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(part, file)
-	return err
-}
-
-func (t *ImageTools) optionalPath(path string) string {
-	if path == "" {
-		return ""
-	}
-	full, err := t.resolve(path)
-	if err != nil {
-		return ""
-	}
-	return full
 }
 
 func saveProviderImage(ctx context.Context, output string, data []byte) error {

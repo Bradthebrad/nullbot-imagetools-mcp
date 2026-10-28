@@ -17,10 +17,10 @@ import (
 func (t *ImageTools) makeContactSheetTool() mcp.Tool {
 	return mcp.Tool{
 		Name:        "make_contact_sheet",
-		Description: "Create a contact sheet PNG/JPEG from workspace-relative images, optionally with captions.",
+		Description: "Create a contact sheet PNG/JPEG from images in the workspace, optionally with captions.",
 		InputSchema: schema(map[string]any{
-			"image_paths":  stringArrayProp("Workspace-relative image paths."),
-			"output_path":  stringProp("Workspace-relative output image path."),
+			"image_paths":  stringArrayProp("Image paths in the workspace."),
+			"output_path":  stringProp("Output image path in the workspace."),
 			"columns":      numberProp("Number of columns. Default: 3."),
 			"thumb_width":  numberProp("Thumbnail width. Default: 320."),
 			"thumb_height": numberProp("Thumbnail height. Default: 220."),

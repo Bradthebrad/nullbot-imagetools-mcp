@@ -20,7 +20,7 @@ func (t *ImageTools) inspectImageTool() mcp.Tool {
 	return mcp.Tool{
 		Name:        "inspect_image",
 		Description: "Inspect an image in the workspace and return format, dimensions, size, and MIME details.",
-		InputSchema: schema(map[string]any{"path": stringProp("Workspace-relative image path.")}, "path"),
+		InputSchema: schema(map[string]any{"path": stringProp("Image path in the workspace, relative or absolute.")}, "path"),
 		Handler: func(ctx context.Context, args map[string]any) (mcp.ToolResult, error) {
 			path, err := t.resolve(textArg(args, "path"))
 			if err != nil {
@@ -52,8 +52,8 @@ func (t *ImageTools) resizeImageTool() mcp.Tool {
 		Name:        "resize_image",
 		Description: "Resize an image to a target width/height. Mode can be contain, cover, or stretch.",
 		InputSchema: schema(map[string]any{
-			"input_path":  stringProp("Workspace-relative source image path."),
-			"output_path": stringProp("Workspace-relative output image path."),
+			"input_path":  stringProp("Source image path in the workspace, relative or absolute."),
+			"output_path": stringProp("Output image path in the workspace."),
 			"width":       numberProp("Output width in pixels."),
 			"height":      numberProp("Output height in pixels."),
 			"mode":        stringProp("contain, cover, or stretch. Default: contain."),
@@ -90,8 +90,8 @@ func (t *ImageTools) cropImageTool() mcp.Tool {
 		Name:        "crop_image",
 		Description: "Crop a rectangular region from an image.",
 		InputSchema: schema(map[string]any{
-			"input_path":  stringProp("Workspace-relative source image path."),
-			"output_path": stringProp("Workspace-relative output image path."),
+			"input_path":  stringProp("Source image path in the workspace, relative or absolute."),
+			"output_path": stringProp("Output image path in the workspace."),
 			"x":           numberProp("Left pixel."),
 			"y":           numberProp("Top pixel."),
 			"width":       numberProp("Crop width in pixels."),
@@ -131,8 +131,8 @@ func (t *ImageTools) addTitleTextTool() mcp.Tool {
 		Name:        "add_title_text",
 		Description: "Add title/subtitle text with a readable backing band to an image for thumbnails or posters.",
 		InputSchema: schema(map[string]any{
-			"input_path":       stringProp("Workspace-relative source image path."),
-			"output_path":      stringProp("Workspace-relative output image path."),
+			"input_path":       stringProp("Source image path in the workspace, relative or absolute."),
+			"output_path":      stringProp("Output image path in the workspace."),
 			"title":            stringProp("Main title text."),
 			"subtitle":         stringProp("Optional subtitle text."),
 			"position":         stringProp("top, center, or bottom. Default: bottom."),
@@ -166,8 +166,8 @@ func (t *ImageTools) composeThumbnailTool() mcp.Tool {
 		Name:        "compose_thumbnail",
 		Description: "Create a thumbnail canvas from an optional background image plus title/subtitle text. Defaults to 1280x720.",
 		InputSchema: schema(map[string]any{
-			"background_path":   stringProp("Optional workspace-relative background image path."),
-			"output_path":       stringProp("Workspace-relative output image path."),
+			"background_path":   stringProp("Optional background image path in the workspace."),
+			"output_path":       stringProp("Output image path in the workspace."),
 			"title":             stringProp("Main title text."),
 			"subtitle":          stringProp("Optional subtitle text."),
 			"width":             numberProp("Canvas width. Default: 1280."),
@@ -199,7 +199,11 @@ func (t *ImageTools) composeThumbnailTool() mcp.Tool {
 				if err != nil {
 					return mcp.ToolResult{}, err
 				}
-				draw.Draw(canvas, canvas.Bounds(), fitImage(img, width, height, textArg(args, "background_fit")), image.Point{}, draw.Src)
+				fit := textArg(args, "background_fit")
+				if fit == "" {
+					fit = "cover" // a thumbnail's background fills the frame, as the schema says
+				}
+				draw.Draw(canvas, canvas.Bounds(), fitImage(img, width, height, fit), image.Point{}, draw.Src)
 			}
 			if boolArg(args, "include_safe_area") {
 				drawRectOutline(canvas, image.Rect(width/20, height/12, width-width/20, height-height/12), color.RGBA{255, 255, 255, 80})

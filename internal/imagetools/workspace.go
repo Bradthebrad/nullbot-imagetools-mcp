@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 type Config struct {
@@ -43,18 +42,9 @@ func New(config Config) (*ImageTools, error) {
 	return &ImageTools{root: root, maxImageBytes: maxImageBytes}, nil
 }
 
+// resolve turns a tool's path argument into a path inside the workspace.
 func (t *ImageTools) resolve(path string) (string, error) {
-	if strings.TrimSpace(path) == "" {
-		return "", fmt.Errorf("path is required")
-	}
-	if filepath.IsAbs(path) {
-		return "", fmt.Errorf("absolute paths are not allowed: %s", path)
-	}
-	full := filepath.Join(t.root, filepath.Clean(path))
-	if err := t.ensureInside(full); err != nil {
-		return "", err
-	}
-	return full, nil
+	return confine(t.root, path)
 }
 
 func (t *ImageTools) resolveOutput(path string) (string, error) {
@@ -66,21 +56,6 @@ func (t *ImageTools) resolveOutput(path string) (string, error) {
 		return "", err
 	}
 	return full, nil
-}
-
-func (t *ImageTools) ensureInside(path string) error {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
-	if abs == t.root {
-		return nil
-	}
-	prefix := t.root + string(os.PathSeparator)
-	if !strings.HasPrefix(abs, prefix) {
-		return fmt.Errorf("path escapes workspace: %s", path)
-	}
-	return nil
 }
 
 func (t *ImageTools) rel(path string) string {

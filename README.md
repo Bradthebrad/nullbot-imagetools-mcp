@@ -31,7 +31,7 @@ Local tools:
 | `resize_image` | Resizes to `width` and `height` with `contain` (default; fits inside and pads with a dark background), `cover` (fills and crops the center), or `stretch`. |
 | `crop_image` | Crops the rectangle given by `x`, `y`, `width`, and `height`. Values are clamped to the image. |
 | `add_title_text` | Draws an uppercase `title` and optional `subtitle` on a semi-transparent band at the `top`, `center`, or `bottom` (default). `text_color` and `background_color` are hex, white on black by default. |
-| `compose_thumbnail` | Builds a canvas (1280x720 by default) from an optional background image and a title band at the bottom. `background_fit` is `contain`, `cover`, or `stretch`; when it is omitted, the background is fitted with `contain`. `include_safe_area` draws a title-safe guide. |
+| `compose_thumbnail` | Builds a canvas (1280x720 by default) from an optional background image and a title band at the bottom. `background_fit` is `contain`, `cover`, or `stretch`; when it is omitted, the background fills the frame (`cover`). `include_safe_area` draws a title-safe guide. |
 | `make_contact_sheet` | Lays out images in a grid with optional file-name captions. `columns` defaults to 3 (1 to 12); thumbnails default to 320x220. |
 | `make_image_pdf` | Builds a PDF with one image per page, scaled to fit. `page_size` is `letter` (default), `a4`, or another standard size (`a1` to `a6`, `legal`, `tabloid`); `orientation` is `portrait` (default) or `landscape`. `title` sets the PDF's title metadata; `captions` adds file names. |
 
@@ -100,7 +100,7 @@ Create a PDF:
 
 NullBot is a small, auditable Go agent ([Bradthebrad/nullbot](https://github.com/Bradthebrad/nullbot)) with a terminal UI and a headless CLI. Its main interface is the desktop app ([Bradthebrad/nullbot_ui](https://github.com/Bradthebrad/nullbot_ui)).
 
-1. In the desktop app, open **Tools > Marketplace** and choose **Install** on NullBot Image Tools MCP. **Check for updates** refreshes the catalog from GitHub releases. The Marketplace installs the latest release, currently `v0.1.1`.
+1. In the desktop app, open **Tools > Marketplace** and choose **Install** on NullBot Image Tools MCP. Install always fetches the newest release (`v0.3.0` as of this writing) and checks it against the release's `SHA256SUMS.txt`; **Check for updates** refreshes the catalog's listing.
 2. NullBot installs the server to `~/.nullbot/mcp/nullbot-imagetools-mcp` and, when the release has a `SHA256SUMS.txt`, verifies the binary against it.
 3. NullBot starts the server over stdio with `--workspace` set to the folder of your primary project.
 4. For the provider tools, add an OpenAI or OpenRouter API key in **Settings > Accounts**. NullBot passes it to the server as `OPENAI_API_KEY` or `OPENROUTER_API_KEY`, so you do not need to set environment variables yourself.
@@ -186,12 +186,12 @@ Legacy SSE:
 
 ## Safety
 
-- Every path must be relative to the workspace. Absolute paths are rejected, and so are paths that leave the workspace with `..`. The client chooses the workspace before it starts the server, for example `--workspace "C:\Users\you\.nullbot\artifacts\images"`.
-- Paths are checked after cleaning, but symlinks are not resolved. A symlink inside the workspace that points outside it is followed for both reads and writes, so do not keep such links in a workspace you give to an agent.
+- A path may be relative to the workspace or absolute, as long as it is inside the workspace; paths that leave it, with `..` or an absolute path elsewhere, are refused, and the error names the workspace so the agent can correct the path. The client chooses the workspace before it starts the server, for example `--workspace "C:\Users\you\.nullbot\artifacts\images"`.
+- Links are resolved: a file or folder link inside the workspace that points outside it is refused, for reads and writes.
 - Missing parent folders of `output_path` are created. An existing file at `output_path` is replaced without asking.
-- `edit_image_openai` drops a `mask_path` that fails the path check and runs the edit without a mask.
+- `edit_image_openai` labels each upload with the picture's real type (PNG, JPEG or WebP, read from the file's bytes, not its extension), requires the mask to be a PNG, and refuses a `mask_path` it can't use instead of editing without it.
 - Provider tools send prompts to OpenAI or OpenRouter, and `edit_image_openai` uploads the input image and mask. When a provider replies with an image URL, the server downloads it. Image requests time out after 180 seconds.
-- `--max-image-bytes` applies to images the server decodes. Images uploaded by `edit_image_openai` are not checked against it.
+- `--max-image-bytes` applies to images the server decodes and to the input and mask that `edit_image_openai` uploads.
 - `image_workspace_info` reports only whether keys are set, never their values.
 - The HTTP and SSE transports have no authentication. Keep `--addr` on `127.0.0.1`.
 
